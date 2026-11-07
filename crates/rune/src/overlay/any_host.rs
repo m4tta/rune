@@ -152,6 +152,16 @@ impl<T: 'static> AnyHost for Overlay<T> {
                 if !state.is_pressed() && let Some(panel) = &self.panel { panel.pointer_released(); }
                 self.apply_input();
             }
+            // A right press reaches `on_secondary_press` as in windows (Linux layer and
+            // XWayland overlays already send `Input::Secondary`).
+            WindowEvent::MouseInput { state, button: winit::event::MouseButton::Right, .. }
+                if self.options.input.resolved(self.interactive) != OverlayInput::None =>
+            {
+                if let Some((x, y)) = self.rt.pointer() {
+                    if state.is_pressed() { self.rt.secondary_down(x, y) } else { self.rt.secondary_up(x, y) }
+                    self.dirty = true;
+                }
+            }
             _ => {}
         }
     }
